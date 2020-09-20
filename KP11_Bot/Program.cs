@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualBasic.CompilerServices;
+using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
@@ -71,26 +72,55 @@ namespace KP11_Bot
                     await botClient.SendTextMessageAsync(message.From.Id, text); //вывод самого сообщения
                     break;
 
-                case "/menu":
-                    var menuKeyboard = new InlineKeyboardMarkup(new[] //создание меню с кнопками
+                case "/internet":
+                    var menuInternet = new InlineKeyboardMarkup(new[] //создание меню с кнопками
                     {
                         new[] //делаем двумерный массив и получаем два ряда и два столбца кнопок. Это первый ряд
                         {
                             InlineKeyboardButton.WithUrl("VK", "https://vk.com/gapoukp11"),
-                            InlineKeyboardButton.WithUrl("Instagram", "http://instagram.com/vseokp11")
+                            InlineKeyboardButton.WithUrl("Instagram", "http://instagram.com/vseokp11"),
+                            InlineKeyboardButton.WithUrl("WhatsUp", "https://api.whatsapp.com/send?phone=796721993902")
                         },
                         new[] //это второй ряд
                         {
-                            InlineKeyboardButton.WithCallbackData("Пункт 1"),
-                            InlineKeyboardButton.WithCallbackData("Пункт 2")
+                            InlineKeyboardButton.WithUrl("Сайт", "https://www.kp11.ru/"),
+                            InlineKeyboardButton.WithUrl("YouTube", "https://www.youtube.com/user/kp11ru/feed?filter=2"),
+                            InlineKeyboardButton.WithUrl("FaceBook", "https://www.facebook.com/gapoukp11")
                         }
                     }
                     );
 
-                    await botClient.SendTextMessageAsync(message.From.Id, "Выберите пункт", replyMarkup: menuKeyboard); //вывод кнопок на экран
+                    await botClient.SendTextMessageAsync(message.From.Id, "Мы есть в интернете! Можешь найти по следующим ссылкам :)", replyMarkup: menuInternet); //вывод кнопок на экран
                     break;
 
-                case "/keyboard":
+                case "/hello":
+                    text = "О, привет!";
+                    await botClient.SendTextMessageAsync(message.From.Id, text); //вывод самого сообщения
+                    break;
+
+                case "/menu":
+                    var menuDo = new InlineKeyboardMarkup(new[]
+                    {
+                        new[]
+                        {
+                            InlineKeyboardButton.WithCallbackData("Расписание"),
+                            InlineKeyboardButton.WithCallbackData("Где мой кабинет?"),
+                            InlineKeyboardButton.WithCallbackData("Меню в столовой")
+                        },
+                        new[]
+                        {
+                            InlineKeyboardButton.WithCallbackData("Где столовая?"),
+                        },
+                        new[]
+                        {
+                            InlineKeyboardButton.WithCallbackData("Где актовый зал?"),
+                            InlineKeyboardButton.WithCallbackData("Пункт 6"),
+                            InlineKeyboardButton.WithCallbackData("Пункт 7")
+                        }
+                    }
+                    );
+
+                    await botClient.SendTextMessageAsync(message.From.Id, "Что ты хотел узнать?", replyMarkup: menuDo);
 
                     break;
 
@@ -98,10 +128,9 @@ namespace KP11_Bot
 string textHelp = //описываем действие на ХЕЛП
 @$"Для навигации по боту ты можешь использовать следующие команды:
 /start - для вызова первого сообщения от меня;
-/menu - для вывзова меню с выбором действий;
-/keyboard - пока не понял для чего));
-/help - для вызова этого меню;
-";
+/internet - это ссылки на нас в интернете;
+/hello - если хочешь поздороваться));
+/help - для вызова этого меню;";
                     await botClient.SendTextMessageAsync(message.From.Id, textHelp);
                     break;
 
