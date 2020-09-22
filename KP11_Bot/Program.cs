@@ -11,6 +11,7 @@ using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using ApiAiSDK;
 using ApiAiSDK.Model;
+using System.IO.Pipes;
 
 namespace KP11_Bot
 {
@@ -21,24 +22,33 @@ namespace KP11_Bot
         /// тело бота
         /// </summary>
         private static ITelegramBotClient botClient;
-        static ApiAi apiAi;
+        //static ApiAi apiAi;
         static void Main(string[] args)
         {
             botClient = new TelegramBotClient("1227072027:AAGGhpJp7UvgEzrVuFq4Msof92rFHHaOTk4") { Timeout = TimeSpan.FromSeconds(10) }; 
                                                                                     //подключение к АПИ и разгрузка сервера
-            AIConfiguration config = new AIConfiguration("AIzaSyCVtgn4Sk0BeoUVYkqkPAxNF2llPI9tZ0I", SupportedLanguage.Russian);
-            apiAi = new ApiAi(config);
+            //AIConfiguration config = new AIConfiguration("dc83c0406e75c7e2fc004e4781167f1c42134024", SupportedLanguage.Russian);
+            //apiAi = new ApiAi(config);
 
-            var me = botClient.GetMeAsync().Result;                                 //Получение данных о боте 
+            try
+            {
+                var me = botClient.GetMeAsync().Result;                                 //Получение данных о боте 
 
-            Console.WriteLine($"Bot id: {me.Id}. Bot name is {me.FirstName}");      //подключен ли бот и как его зовут
+                Console.WriteLine($"Bot id: {me.Id}. Bot name is {me.FirstName}");      //подключен ли бот и как его зовут
 
-            botClient.OnMessage += Bot_OnMessage;                                   //подписались на получение сообщения
-            botClient.OnCallbackQuery += BotOnCallbackQueryRecived;                 //подключили обработку действий с кнопок
 
-            botClient.StartReceiving();                                             //ожидание новых сообщений 
+                botClient.OnMessage += Bot_OnMessage;                                   //подписались на получение сообщения
+                botClient.OnCallbackQuery += BotOnCallbackQueryRecived;                 //подключили обработку действий с кнопок
 
-            Console.ReadKey();                                                      //консоль не будет закрываться)))
+                botClient.StartReceiving();                                             //ожидание новых сообщений 
+
+                Console.ReadKey();                                                      //консоль не будет закрываться)))
+
+            }
+            catch
+            {
+                Console.WriteLine("Отсутствует побключение");
+            }
         }
 
         /// <summary>
@@ -48,46 +58,36 @@ namespace KP11_Bot
         /// <param name="e"></param>
         private static async void BotOnCallbackQueryRecived(object sender, CallbackQueryEventArgs e)
         {
-            string buttonText = e.CallbackQuery.Data;                                           //получем данные из названия кнопки
+            string textMessage = e.CallbackQuery.Data;                                           //получем данные из названия кнопки
+            string buttonText = textMessage.Trim();                                             //если есть пробелы спереди или сзади - убераем
             string name = $"{e.CallbackQuery.From.FirstName} {e.CallbackQuery.From.LastName}";  //достаем имя пользователя
             Console.WriteLine($"{name} нажал {buttonText}");                                    //отображаем в консоли что выбрал юхер
 
-            switch(buttonText)
+            string dateToday = Convert.ToString(DateTime.Now);
+            dateToday = dateToday.Substring(0, dateToday.Length - 9);
+            dateToday = dateToday.Replace(".", "");
+            string linkMenu = "https://sch883sz.mskobr.ru/files/" + $"ss{dateToday}.pdf";
+
+            switch (buttonText)                                                                  //обрабатываем кнопки
             {
                 case "Где столовая?":
-                    await botClient.SendTextMessageAsync(e.CallbackQuery.From.Id, "https://youtu.be/crnClMC1wec"); //выводим текст, если выбрана столовая
+                    await botClient.SendTextMessageAsync(e.CallbackQuery.From.Id, 
+                        "https://youtu.be/crnClMC1wec");
                 break;
 
                 case "Где актовый зал?":
                     await botClient.SendTextMessageAsync(e.CallbackQuery.From.Id, 
                         "Сначала ты покушай, а представления потом");
+                break;
 
-                    break;
                 case "Расписание":
                     await botClient.SendTextMessageAsync(e.CallbackQuery.From.Id, 
-                        "https://vk.com/doc214376375_570560036?hash=83dfae16db77607f67&dl=8a44a9bebd840d54ed"); 
+                        "https://sun1-24.userapi.com/Q6UFwrHOeRxliIGYCPMa-LgRiDQ41VUflTXdbQ/oJ0TZWN0frM.jpg");
+                break;
 
-                    break;
-                case "Где мой кабинет?":
-                    await botClient.SendTextMessageAsync(e.CallbackQuery.From.Id, 
-                        "Твой кабинет в колледже"); 
-
-                    break;
                 case "Меню в столовой":
-                    await botClient.SendTextMessageAsync(e.CallbackQuery.From.Id, 
-                        "https://sch883sz.mskobr.ru/files/ss21092020.pdf"); 
-
-                    break;
-                case "Связь с куратором":
-                    await botClient.SendTextMessageAsync(e.CallbackQuery.From.Id, 
-                        "Тут будет ссылка на преподавателя нужного"); 
-
-                    break;
-                case "Связь с":
-                    await botClient.SendTextMessageAsync(e.CallbackQuery.From.Id, 
-                        "Я еще не придумал");
-
-                    break;
+                    await botClient.SendTextMessageAsync(e.CallbackQuery.From.Id, $"{linkMenu}"); 
+                break;
             }
 
             try
@@ -96,7 +96,7 @@ namespace KP11_Bot
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.Message);                                                            //или не отображаем))
             }
         }
 
@@ -112,7 +112,6 @@ namespace KP11_Bot
         {
             var message = e.Message;                                                 //сохраняем введеный поьзователем текст
             string nameOfUser = $"{message.From.FirstName} {message.From.LastName}"; //достаем имя пользователя
-            string groupOfUser = null;                                               //храним группу пользователя (пока хз как)
 
             if (message == null || message.Type != MessageType.Text)                 //проверяем на тип отправленных данных пользователем
             {
@@ -128,12 +127,11 @@ namespace KP11_Bot
                     string text =                                                    //переменная для вывода текста пользователю
 @$"Привет, {nameOfUser}! 
 Теперь ты часть нашего лампового сообщества, рад, что ты присоединился :)
-Для того чтобы я мог корректно работать, пришли мне из какой ты группы, пожалуйста.
 Кстати, ты можешь ознакмиться со списком комманд, которые я умею выполнять, написав '/help'";
                     await botClient.SendTextMessageAsync(message.From.Id, text);     //вывод самого сообщения
-                    break;
+                break;
 
-                case "/internet":
+                case "/ourLinks":
                     var menuInternet = new InlineKeyboardMarkup(new[]                //создание меню с кнопками
                     {
                         new[]                                                        //делаем двумерный массив и получаем два ряда и два столбца кнопок. Это первый ряд
@@ -152,91 +150,102 @@ namespace KP11_Bot
                     );
 
                     await botClient.SendTextMessageAsync(message.From.Id, "Мы есть в интернете! Можешь найти по следующим ссылкам :)", replyMarkup: menuInternet); //вывод кнопок на экран
-                    break;
+                break;
 
                 case "/keyboard":
                     var replaceKeyboard = new ReplyKeyboardMarkup(new[]                 //создаем кнопки для "клавиатуры". Это двумерный массив
                     {
                         new[]                                                           //первый ряд кнопок клавиатуры
                         {
-                            new KeyboardButton("Поделиться геолокацией") {RequestLocation = true},
-                            new KeyboardButton("Поделиться контактом") {RequestContact = true}
+                            new KeyboardButton("Поделиться геолокацией") {RequestLocation = true}
                         },
                         new[]                                                           //второй ряд клавиатуры
                         {
-                            new KeyboardButton("Где столовая?"),
-                            new KeyboardButton("Где актовывй зал?")
+                            new KeyboardButton("Поделиться контактом") {RequestContact = true}
                         }
                     });
                     await botClient.SendTextMessageAsync(message.From.Id, "Выбери, что ты хочешь узнать:", replyMarkup: replaceKeyboard);
                                                                                         //обрабатывем действие юхера и выводим клавиатуру
-                    break;
+                break;
 
-                case "/menu": //меню действий для студента
+                case "/menu":                                                           //меню действий для студента
                     var menuDo = new InlineKeyboardMarkup(new[]                         //делаем кнопки под сообщением. Опять многомерный массив
                     {
                         new[]
                         {
-                            InlineKeyboardButton.WithCallbackData("Расписание"),
-                            InlineKeyboardButton.WithCallbackData("Где мой кабинет?"),
-                            InlineKeyboardButton.WithCallbackData("Меню в столовой")
+                            InlineKeyboardButton.WithCallbackData("Расписание")
                         },
                         new[]
                         {
                             InlineKeyboardButton.WithCallbackData("Где столовая?"),
+                            InlineKeyboardButton.WithCallbackData("Меню в столовой")
                         },
                         new[]
                         {
-                            InlineKeyboardButton.WithCallbackData("Где актовый зал?"),
-                            InlineKeyboardButton.WithCallbackData("Связь с куратором"),
-                            InlineKeyboardButton.WithCallbackData("Связь с ")
+                            InlineKeyboardButton.WithCallbackData("Где актовый зал?")
                         }
                     }
                     );
 
                     await botClient.SendTextMessageAsync(message.From.Id, "Что ты хотел узнать?", replyMarkup: menuDo); //выводим эти кнопки
 
-                    break;
+                break;
 
                 case "/help":                                                           //основыне команды для пользователя
-string textHelp = //описываем действие на ХЕЛП
+string textHelp =                                                                       //описываем действие на ХЕЛП. Такой вид - это для корректного отображения сообщения в телеге
 @$"Для навигации по боту ты можешь использовать следующие команды:
 /start - для вызова первого сообщения от меня;
 /menu - для вызова моих основных функций;
-/internet - это ссылки на нас в интернете;
+/ourLinks - это ссылки на нас в интернете;
 /keyboard - для удобного доступа к командам;
 /help - для вызова этого меню;";
                     await botClient.SendTextMessageAsync(message.From.Id, textHelp);
 
-                    break;
+                break;
 
-                default: //это остальное. Тут должна быть обработка сообщений - не команд (обычных сообщений боту), которая осуществляется через апи DialogFlow
-                    try
+                default:                                                                //это остальное. Тут должна быть обработка сообщений - не команд (обычных сообщений боту), которая осуществляется через апи DialogFlow
+                    try                                                                 //но будет тут просто обработка данных введенных юзером без слешей
                     {
-                        var responce = apiAi.TextRequest(message.Text);                      //Текст из переменной отправляем на сервер АПИ
-                        string answer = responce.Result.Fulfillment.Speech;                  //получаем ответ на текст, отправленный на АПИ
-                        if (answer == "")
-                            answer = "Прости, я не понял, что ты имел ввиду";                //если поступила неизвестная команда
-                        await botClient.SendTextMessageAsync(message.From.Id, answer);       //отвечаем пользователю ответом от АПИ
+                        var responce = message.Text;
+                        string answer = null;
+
+                        string dateToday = Convert.ToString(DateTime.Now);
+                        dateToday = dateToday.Substring(0, dateToday.Length - 9);
+                        dateToday = dateToday.Replace(".", "");
+                        string linkMenu = "https://sch883sz.mskobr.ru/files/" + $"ss{dateToday}.pdf";
+
+                        if (responce != null)
+                        {
+                            if (responce == "привет" || responce == "Привет")
+                                answer = "Здравствуй!";
+
+                            else if (responce == "меню" || responce == "Меню")
+                                answer = "Конечно, держи! " +
+                                    $"{linkMenu}";
+
+                            else if (responce == "где столовая?" || responce == "где столовая" ||
+                                     responce == "Где столовая?" || responce == "Где столовая")
+                                answer = "https://youtu.be/crnClMC1wec";
+
+                            else
+                                answer = "Прости, я тебя не понял, или я этого еще не умею, но я работаю над этим!" +
+                                    "Пока ты можешь воспользоваться командой '/help', чтобы узнать, что я умею.";
+                            
+                                await botClient.SendTextMessageAsync(message.From.Id, answer);
+                        }
+                        //var responce = apiAi.TextRequest(message.Text);                      //Текст из переменной отправляем на сервер АПИ
+                        //string answer = responce.Result.Fulfillment.Speech;                  //получаем ответ на текст, отправленный на АПИ
+                        //if (answer == "")
+                        //    answer = "Прости, я не понял, что ты имел ввиду";                //если поступила неизвестная команда
+                        //await botClient.SendTextMessageAsync(message.From.Id, answer);       //отвечаем пользователю ответом от АПИ
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex.Message);
                     }
-                    break;
+                break;
             }
-
-            //if (text == null)
-            //    return;
-
-            //await botClient.SendTextMessageAsync(
-            //    chatId: e.Message.Chat,
-            //    text: $"Рад, что ты присоединился! Как тебя зовут?"
-            //    ).ConfigureAwait(false);
-
         }
-
-
 
     }
 }
